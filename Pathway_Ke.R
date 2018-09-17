@@ -3,6 +3,13 @@
 #options()
 #options(digits=3)
 
+## Git command:
+# cd Dropbox/Papers/Work in Progress/2018 Homeownership
+# git add Pathway_Ke.R
+# git commit -m "<versionname>"
+# git remote add origin https://github.com/norzvic/Homeownership.git
+# git remote push -u origin master
+
 ##loading the library 
 library("Matching")
 library("MatchIt")
@@ -23,28 +30,51 @@ pathway <- read_por("02420-0002-Data.por")
 a <- c("CPS_28","CPS_178","CPS_32","CPS_161","CPS_163",
        "CPS_180","RACE","SEX","G2_A4_C","G2_A5","G2_A5_C",
        "G2_C5","G2_P2","G2_P3","G2_B1","X3MARRNM","UNION",
-       "CPS_169","CPS_180","CPS_158","G2_A4_F","CAL_32","CAL_33","CAL_34")
+       "CPS_169","CPS_180","CPS_158","G2_A4_F","CAL_32","CAL_33","CAL_34",
+       "G1_A5", "G1_A5_D", "G1_A5_K1", "G1_A5_K2", "G1_A5_K3",  # Add G1 Interviews
+       "G1_A6", "G1_A6_A","G1_A6_D", "G1_A7")
 data <- pathway[,(colnames(pathway) %in% a)]
-data$CPS_28[data$CPS_28 == 99] <- NA
-data$CPS_178[data$CPS_178 == 9] <- NA
-data$CPS_32[data$CPS_32 > 18] <- NA
-data$CPS_161[data$CPS_161 == 99999] <- NA
-data$CPS_163[data$CPS_163 == 99999] <- NA
-data$CPS_180[data$CPS_180 == 9] <- NA
-data$G2_A4_C[data$G2_A4_C > 3] <- NA
-data$G2_A5[data$G2_A5 > 2] <- NA
-data$G2_A5_C[data$G2_A5_C >6] <- NA
-data$G2_C5[data$G2_C5 > 2] <- NA
-data$CPS_180[data$CPS_180 > 3] <- NA
-##data$G2_P2[data$G2_P2 > 250000] <- NA
-data$G2_P3[data$G2_P3 >250000] <- NA
-data$G2_B1[data$G2_B1 > 17] <- NA
-data$X3MARRNM[data$X3MARRNM >3] <- NA
-data$UNION[data$UNION > 3] <- NA
-data$G2_A4_F[data$G2_A4_F > 5] <- NA
-data$RACE[data$RACE != 1] <- 0
-data$SEX[data$SEX !=1] <- 0
-data$move <- data$CAL_33
+data$CPS_28[data$CPS_28 == 99] <- NA  # CHILDREN <8 SUPPORTED IN G1HH AT G2BIR
+data$CPS_32[data$CPS_32 > 18] <- NA  # G1 YEARS OF COMPLETED SCHOOL AT G2 BIRTH
+data$CPS_161[data$CPS_161 == 99999] <- NA  # G2 AGE 7/8 - G1 HH INCOME (Intervals)
+data$CPS_163[data$CPS_163 == 99999] <- NA  # G2 AGE 7/8 - G1 OR NON-PARENT YEARLY HH (Intervals)
+data$CPS_178[data$CPS_178 == 9] <- NA  # G2 AGE 7/8-G1 # OF ADD CHILDREN SINCE G2
+data$CPS_180[data$CPS_180 == 9] <- NA  # G2 AGE 7/8- G1 MARITAL STATUS: 1 = NEver, 2 = Currently married, 3 = Formerly married
+data$CPS_180[data$CPS_180 > 3] <- NA  # G2 AGE 7/8- G1 MARITAL STATUS
+
+data$X3MARRNM[data$X3MARRNM >3] <- NA  # G2 # OF MARRIAGES
+data$UNION[data$UNION > 3] <- NA  # UNION STATUS AT THE G2 INTERVIEW: 1 = Married, 2 = Non-union, 3 = Cohabitating
+data$RACE[data$RACE != 1] <- 0  # G2 RACE: 1 = White, 0 = Other. NOTE: 490 IN WHITE, 2200 IN BLACK, 4 IN OTHER
+data$SEX[data$SEX !=1] <- 0  # G2 SEX: 0 = Female, 1 = Male
+
+data$G2_A4_C[data$G2_A4_C > 3] <- NA  # G2 AGE 16 - OWN OR RENT DWELLING
+data$G2_A4_F[data$G2_A4_F > 5] <- NA  # G2 AGE 16 - RACIAL MIX IN NEIGHBORHOOD
+data$G2_A5[data$G2_A5 > 2] <- NA  # G2 SAME OR DIFF. RESIDENCE AGE 12 & 16
+data$G2_A5_C[data$G2_A5_C >6] <- NA  # G2 AGE 12 - OWN OR RENT DWELLING
+data$G2_B1[data$G2_B1 > 17] <- NA  # G2 EDUCATION
+data$G2_C5[data$G2_C5 > 2] <- NA  # G2 EVER SERVE IN THE MILITARY
+##data$G2_P2[data$G2_P2 > 250000] <- NA  # G2 TOTAL HH INCOME IN DOLLARS
+data$G2_P3[data$G2_P3 >250000] <- NA  # G2 PERSONAL INCOME IN DOLLARS
+
+data$move <- data$CAL_33  # NUMBER OF MOVES FROM YEARS 13-16 (Cal)
+
+data$G1_A5[data$G1_A5 > 2] <- NA  # G2 living with G1 at 16-17
+data$G1_A5 <- dataG1_A5 - 1  # No = 0, Yes = 1
+data$G1_A5_D[data$G1_A5_D > 3] <- NA  # Rent or Own at 16-17?
+data$G1_A5_D[data$G1_A5_D > 1] <- 0  # Rent/Other = 0, Own = 1
+data$G1_A5_K1[data$G1_A5_K1 > 2] <- NA  # Lack of space or privacy
+data$G1_A5_K1 <- data$G1_A5_K1 - 1  # No = 0, Yes = 1
+data$G1_A5_K2[data$G1_A5_K2 > 2] <- NA  # Lack of security from break-ins
+data$G1_A5_K2 <- data$G1_A5_K2 - 1  # No = 0, Yes = 1
+data$G1_A5_K3[data$G1_A5_K3 > 2] <- NA  # Crime in the neighborhood
+data$G1_A5_K3 <- data$G1_A5_K3 - 1  # No = 0, Yes = 1
+data$G1_A6[data$G1_A6 > 2] <- NA  # G2 living with G1 at 11-12
+data$G1_A6 <- dataG1_A6 - 1  # No = 0, Yes = 1
+data$G1_A6_A[data$G1_A6_A > 2] <- NA  # The same residence as 16-17?
+data$G1_A6_A <- data$G1_A6_A - 1  # No = 0, Yes = 1
+data$G1_A6_D[data$G1_A6_D > 3] <- NA  # Rent or Own at 11-12?
+data$G1_A6_D[data$G1_A6_D > 1] <- 0  # Rent/Other = 0, Own = 1
+data$G1_A7[data$G1_A7 > 1] <- 0  # A5 + A6: living together both 11-12 and 16-17? Yes = 1, Other = 0
 ## Select those who form new household
 
 data <- na.omit(data)
@@ -54,7 +84,8 @@ data$G2_A4_C[data$G2_A4_C != 1] <- 0
 data$G2_A5[data$G2_A5 == 1] <- 0
 data$G2_A5[data$G2_A5 == 2] <- 1
 data$G2_A5_C[data$G2_A5_C != 1] <- 0
-data$treatment <- data$G2_A4_C*data$G2_A5-data$G2_A5_C*data$G2_A4_C*(data$G2_A5-1)
+#data$treatment <- data$G2_A4_C*data$G2_A5-data$G2_A5_C*data$G2_A4_C*(data$G2_A5-1)
+data$treatment <- data$
 summary(data$treatment)
 hist(data$treatment)
 
