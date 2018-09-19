@@ -7,7 +7,7 @@
 # cd Dropbox/Papers/Work in Progress/2018 Homeownership
 # git add Pathway_Ke.R
 # git commit -m "<versionname>"
-# git remote add origin https://github.com/norzvic/Homeownership.git
+# (git remote add origin https://github.com/norzvic/Homeownership.git)
 # git remote push -u origin master
 
 ##loading the library 
@@ -48,9 +48,12 @@ data$RACE[data$RACE != 1] <- 0  # G2 RACE: 1 = White, 0 = Other. NOTE: 490 IN WH
 data$SEX[data$SEX !=1] <- 0  # G2 SEX: 0 = Female, 1 = Male
 
 data$G2_A4_C[data$G2_A4_C > 3] <- NA  # G2 AGE 16 - OWN OR RENT DWELLING
+data$G2_A4_C[data$G2_A4_C != 1] <- 0  # 0 = Rent/Other, 1 = Own
 data$G2_A4_F[data$G2_A4_F > 5] <- NA  # G2 AGE 16 - RACIAL MIX IN NEIGHBORHOOD
 data$G2_A5[data$G2_A5 > 2] <- NA  # G2 SAME OR DIFF. RESIDENCE AGE 12 & 16
+data$G2_A5 <- data$G2_A5 - 1  # 0 = No, 1 = Yes
 data$G2_A5_C[data$G2_A5_C >6] <- NA  # G2 AGE 12 - OWN OR RENT DWELLING
+data$G2_A5_C[data$G2_A5_C != 1] <- 0  # 0 = Rent/Other, 1 = Own
 data$G2_B1[data$G2_B1 > 17] <- NA  # G2 EDUCATION
 data$G2_C5[data$G2_C5 > 2] <- NA  # G2 EVER SERVE IN THE MILITARY
 ##data$G2_P2[data$G2_P2 > 250000] <- NA  # G2 TOTAL HH INCOME IN DOLLARS
@@ -59,7 +62,7 @@ data$G2_P3[data$G2_P3 >250000] <- NA  # G2 PERSONAL INCOME IN DOLLARS
 data$move <- data$CAL_33  # NUMBER OF MOVES FROM YEARS 13-16 (Cal)
 
 data$G1_A5[data$G1_A5 > 2] <- NA  # G2 living with G1 at 16-17
-data$G1_A5 <- dataG1_A5 - 1  # No = 0, Yes = 1
+data$G1_A5 <- data$G1_A5 - 1  # No = 0, Yes = 1
 data$G1_A5_D[data$G1_A5_D > 3] <- NA  # Rent or Own at 16-17?
 data$G1_A5_D[data$G1_A5_D > 1] <- 0  # Rent/Other = 0, Own = 1
 data$G1_A5_K1[data$G1_A5_K1 > 2] <- NA  # Lack of space or privacy
@@ -69,7 +72,7 @@ data$G1_A5_K2 <- data$G1_A5_K2 - 1  # No = 0, Yes = 1
 data$G1_A5_K3[data$G1_A5_K3 > 2] <- NA  # Crime in the neighborhood
 data$G1_A5_K3 <- data$G1_A5_K3 - 1  # No = 0, Yes = 1
 data$G1_A6[data$G1_A6 > 2] <- NA  # G2 living with G1 at 11-12
-data$G1_A6 <- dataG1_A6 - 1  # No = 0, Yes = 1
+data$G1_A6 <- data$G1_A6 - 1  # No = 0, Yes = 1
 data$G1_A6_A[data$G1_A6_A > 2] <- NA  # The same residence as 16-17?
 data$G1_A6_A <- data$G1_A6_A - 1  # No = 0, Yes = 1
 data$G1_A6_D[data$G1_A6_D > 3] <- NA  # Rent or Own at 11-12?
@@ -80,12 +83,22 @@ data$G1_A7[data$G1_A7 > 1] <- 0  # A5 + A6: living together both 11-12 and 16-17
 data <- na.omit(data)
 
 ##recoding the treatment
-data$G2_A4_C[data$G2_A4_C != 1] <- 0 
-data$G2_A5[data$G2_A5 == 1] <- 0
-data$G2_A5[data$G2_A5 == 2] <- 1
-data$G2_A5_C[data$G2_A5_C != 1] <- 0
+
 #data$treatment <- data$G2_A4_C*data$G2_A5-data$G2_A5_C*data$G2_A4_C*(data$G2_A5-1)
-data$treatment <- data$
+data$treatment <- NA
+for (i in 1:length(data$treatment)){
+  if (data$G2_A4_C[i] * data$G2_A5[i] * data$G2_A5_C[i] * data$G1_A6[i] * data$G1_A5[i] * data$G1_A5_D[i] * data$G1_A6_A[i] == 1){
+    data$treatment[i] <- 1
+  } else{
+    data$treatment[i] <- 0
+  }
+}  # 1 = G2 live in owned house 12-16 & G1 confirm that they live in owned house 12-16, 0 = Others
+
+
+data <- na.omit(data)
+#write.csv(data, "Ke_ckeck180918.csv")
+
+
 summary(data$treatment)
 hist(data$treatment)
 
