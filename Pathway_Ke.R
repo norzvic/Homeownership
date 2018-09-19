@@ -8,7 +8,7 @@
 # git add Pathway_Ke.R
 # git commit -m "<versionname>"
 # (git remote add origin https://github.com/norzvic/Homeownership.git)
-# git remote push -u origin master
+# git push -u origin master
 
 ##loading the library 
 library("Matching")
