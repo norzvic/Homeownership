@@ -28,11 +28,11 @@ pathway <- read_por("02420-0002-Data.por")
 
 ##data cleaning 
 a <- c("CPS_28","CPS_178","CPS_32","CPS_161","CPS_163",
-       "CPS_180","RACE","SEX","G2_A4_C","G2_A5","G2_A5_C",
-       "G2_C5","G2_P2","G2_P3","G2_B1","X3MARRNM","UNION",
+       "CPS_180","RACE","SEX","G2_A3_A","G2_A4","G2_A4_C","G2_A5",
+       "G2_C5","G2_P3","G2_B1","X3MARRNM","UNION",
        "CPS_169","CPS_180","CPS_158","G2_A4_F","CAL_32","CAL_33","CAL_34",
-       "G1_A5", "G1_A5_D", "G1_A5_K1", "G1_A5_K2", "G1_A5_K3",  # Add G1 Interviews
-       "G1_A6", "G1_A6_A", "G1_A7")
+       "G1_A5", "G1_A5_D",   # Add G1 Interviews
+       "G1_A6", "G1_A6_A")
 data <- pathway[,(colnames(pathway) %in% a)]
 data$CPS_28[data$CPS_28 == 99] <- NA  # CHILDREN <8 SUPPORTED IN G1HH AT G2BIR
 data$CPS_32[data$CPS_32 > 18] <- NA  # G1 YEARS OF COMPLETED SCHOOL AT G2 BIRTH
@@ -47,19 +47,21 @@ data$UNION[data$UNION > 3] <- NA  # UNION STATUS AT THE G2 INTERVIEW: 1 = Marrie
 data$RACE[data$RACE != 1] <- 0  # G2 RACE: 1 = White, 0 = Other. NOTE: 490 IN WHITE, 2200 IN BLACK, 4 IN OTHER
 data$SEX[data$SEX !=1] <- 0  # G2 SEX: 0 = Female, 1 = Male
 
+data$G2_A3_A[data$G2_A3_A > 3] <- NA  # G2 CURRENT - OWN OR RENT DWELLING
+data$G2_A3_A[data$G2_A3_A != 1] <- 0  # 1 = Owned, 0 = Rent/Other
+data$G2_A4[data$G2_A4 > 2] <- NA  # G2 SAME OR DIFF. RESIDENCE AGE 16 & NOW
+data$G2_A4 <- data$G2_A4 - 1  # 0 = Diff, 1 = Same
 data$G2_A4_C[data$G2_A4_C > 6] <- NA  # G2 AGE 16 - OWN OR RENT DWELLING
 data$G2_A4_C[data$G2_A4_C == 2] <- 0
-data$G2_A4_C[data$G2_A4_C == 3] <- 0
-data$G2_A4_C[data$G2_A4_C == 6] <- 1  # 0 = Rent/Other, 1 = Own/Skip/NA
-                                      # NOTE: HERE SKIP(6) SHOULD BE COUNTED IN "OWNED" SINCE THOSE WHO LIVE IN SAME PLACE 16-CURRENT (G2_A4 = 2) SKIP THE Q.
+data$G2_A4_C[data$G2_A4_C == 3] <- 0  # 0 = Rent/Other, 1 = Own, 6 = Skip/NA
+                                      # NOTE: HERE SKIP(6) SHOULD BE INCLUDED SINCE THOSE WHO LIVE IN SAME PLACE 16-CURRENT (G2_A4 = 2) SKIP THE Q.
 data$G2_A4_F[data$G2_A4_F > 5] <- NA  # G2 AGE 16 - RACIAL MIX IN NEIGHBORHOOD
 data$G2_A5[data$G2_A5 > 2] <- NA  # G2 SAME OR DIFF. RESIDENCE AGE 12 & 16
 data$G2_A5 <- data$G2_A5 - 1  # 0 = No, 1 = Yes
-data$G2_A5_C[data$G2_A5_C > 6] <- NA  # G2 AGE 12 - OWN OR RENT DWELLING
-data$G2_A5_C[data$G2_A5_C == 2] <- 0
-data$G2_A5_C[data$G2_A5_C == 3] <- 0
-data$G2_A5_C[data$G2_A5_C == 6] <- 1  # 0 = Rent/Other, 1 = Own/Skip/NA
-                                      # NOTE: HERE SKIP(6) SHOULD BE COUNTED IN "OWNED" SINCE THOSE WHO LIVE IN SAME PLACE 16-CURRENT (G2_A5 = 2) SKIP THE Q.
+#data$G2_A5_C[data$G2_A5_C > 6] <- NA  # G2 AGE 12 - OWN OR RENT DWELLING
+#data$G2_A5_C[data$G2_A5_C == 2] <- 0
+#data$G2_A5_C[data$G2_A5_C == 3] <- 0  # 0 = Rent/Other, 1 = Own, 6 = Skip/NA
+                                      # NOTE: HERE SKIP(6) SHOULD BE INCLUDED SINCE THOSE WHO LIVE IN SAME PLACE 16-CURRENT (G2_A5 = 2) SKIP THE Q.
 data$G2_B1[data$G2_B1 > 17] <- NA  # G2 EDUCATION
 data$G2_C5[data$G2_C5 > 2] <- NA  # G2 EVER SERVE IN THE MILITARY
 ##data$G2_P2[data$G2_P2 > 250000] <- NA  # G2 TOTAL HH INCOME IN DOLLARS
@@ -74,44 +76,55 @@ data$nomove[data$move != 0] <- 0  # For the convenience of constructing treatmen
 data$G1_A5[data$G1_A5 > 2] <- NA  # G2 living with G1 at 16-17
 data$G1_A5 <- data$G1_A5 - 1  # No = 0, Yes = 1
 data$G1_A5_D[data$G1_A5_D > 6] <- NA  # Rent or Own at 16-17?
-data$G1_A5_D[data$G1_A5_D > 1] <- 0  # Rent/Other/Skip/NA = 0, G2 LIVE WITH G2 AND Own = 1
-                                     # NOTE: HERE SKIP(6) SHOULD BE COUNTED IN NOT "OWNED" SINCE THOSE G2 NOT LIVING WITH G1 AT 16 (G1_A5 = 1) SKIP THE Q.
-data$G1_A5_K1[data$G1_A5_K1 > 2] <- NA  # Lack of space or privacy
-data$G1_A5_K1 <- data$G1_A5_K1 - 1  # No = 0, Yes = 1
-data$G1_A5_K2[data$G1_A5_K2 > 2] <- NA  # Lack of security from break-ins
-data$G1_A5_K2 <- data$G1_A5_K2 - 1  # No = 0, Yes = 1
-data$G1_A5_K3[data$G1_A5_K3 > 2] <- NA  # Crime in the neighborhood
-data$G1_A5_K3 <- data$G1_A5_K3 - 1  # No = 0, Yes = 1
+data$G1_A5_D[data$G1_A5_D == 2] <- 0
+data$G1_A5_D[data$G1_A5_D == 3] <- 0  # Rent/Other = 0, G2 LIVE WITH G2 AND Own = 1, Skip/NA = 6
+                                      # NOTE: HERE SKIP(6) SHOULD BE INCLUDED SINCE THOSE G2 NOT LIVING WITH G1 AT 16 (G1_A5 = 1) SKIP THE Q.
+#data$G1_A5_K1[data$G1_A5_K1 > 2] <- NA  # Lack of space or privacy
+#data$G1_A5_K1 <- data$G1_A5_K1 - 1  # No = 0, Yes = 1
+#data$G1_A5_K2[data$G1_A5_K2 > 2] <- NA  # Lack of security from break-ins
+#data$G1_A5_K2 <- data$G1_A5_K2 - 1  # No = 0, Yes = 1
+#data$G1_A5_K3[data$G1_A5_K3 > 2] <- NA  # Crime in the neighborhood
+#data$G1_A5_K3 <- data$G1_A5_K3 - 1  # No = 0, Yes = 1
 data$G1_A6[data$G1_A6 > 2] <- NA  # G2 living with G1 at 11-12
 data$G1_A6 <- data$G1_A6 - 1  # No = 0, Yes = 1
-data$G1_A6_A[data$G1_A6_A > 2] <- NA  # The same residence as 16-17?
-data$G1_A6_A <- data$G1_A6_A - 1  # No = 0, Yes = 1
+data$G1_A6_A[data$G1_A6_A > 6] <- NA  # The same residence as 16-17?
+data$G1_A6_A <- data$G1_A6_A - 1
+data$G1_A6_A[data$G1_A6_A == 5] <- 6  # No = 0, Yes = 1, Skip/NA = 6
+                                      # NOTE: HERE SKIP(6) SHOULD BE INCLUDED SINCE THOSE G2 NOT LIVING WITH G1 AT 11 (G1_A6 = 1) SKIP THE Q.
 #data$G1_A6_D[data$G1_A6_D > 3] <- NA  # Rent or Own at 11-12?
 #data$G1_A6_D[data$G1_A6_D > 1] <- 0  # Rent/Other = 0, Own = 1
-data$G1_A7[data$G1_A7 > 1] <- 0  # A5 + A6: living together both 11-12 and 16-17? Yes = 1, Other = 0
-## Select those who form new household
+#data$G1_A7[data$G1_A7 > 1] <- 0  # A5 + A6: living together both 11-12 and 16-17? Yes = 1, Other = 0
 
 data <- na.omit(data)
 
 ##recoding the treatment
-
 #data$treatment <- data$G2_A4_C*data$G2_A5-data$G2_A5_C*data$G2_A4_C*(data$G2_A5-1)
 data$treatment <- NA
 for (i in 1:length(data$treatment)){
-  if (data$G2_A4_C[i] * data$G2_A5[i] * data$G2_A5_C[i] * data$G1_A6[i] * data$G1_A5[i] * data$G1_A5_D[i] * data$G1_A6_A[i] * data$nomove[i] == 1){
+  if (data$G2_A3_A[i] == 1  &
+      data$G2_A4[i] == 1    &
+      data$G2_A5[i] == 1    &
+      data$G1_A5[i] == 1    &
+      data$G1_A5_D[i] == 1  &
+      data$G1_A6[i] == 1    &
+      data$G1_A6_A[i] == 1){
+    data$treatment[i] <- 1
+  } else if(
+      data$G2_A4[i] == 0    &
+      data$G2_A4_C[i] == 1  &
+      data$G2_A5[i] == 1    &
+      data$G1_A5[i] == 1    &
+      data$G1_A5_D[i] == 1  &
+      data$G1_A6[i] == 1    &
+      data$G1_A6_A[i] == 1){
     data$treatment[i] <- 1
   } else{
-    data$treatment[i] <- 0
-  }
+    data$treatment[i] <- 0}
 }  # 1 = G2 live in owned house 12-16 & G1 confirm that they live in owned house 12-16, 0 = Others
 
 
-data <- na.omit(data)
-#write.csv(data, "Ke_ckeck180918.csv")
-
-
-summary(data$treatment)
-hist(data$treatment)
+#summary(data$treatment)
+#hist(data$treatment)
 
 ##Recoding for the covarites 
 data$nkids <- data$CPS_28+data$CPS_178+1
@@ -137,6 +150,50 @@ data$responding2 <- log(data$income+1)/data$educ
 ##Recoding the treatment for residential stability
 data$treatment2 <- 1
 data$treatment2[data$move >= 3] <- 0
+
+# Abandon observations that G2 and G1 conflict.
+data$G2_dummy <- 0
+for (i in 1:length(data$treatment)){
+  if (data$G2_A3_A[i] == 1  &
+    data$G2_A4[i] == 1    &
+    data$G2_A5[i] == 1){
+    data$G2_dummy[i] <- 1
+  } else
+  if (data$G2_A4[i] == 0    &
+      data$G2_A4_C[i] == 1  &
+      data$G2_A5[i] == 1){
+    data$G2_dummy[i] <- 1
+  }
+}
+
+data$G1_dummy <- 0
+for (i in 1:length(data$treatment)){
+  if (data$G1_A5[i] == 1    &
+      data$G1_A5_D[i] == 1  &
+      data$G1_A6[i] == 1    &
+      data$G1_A6_A[i] == 1){
+    data$G1_dummy[i] <- 1
+  }
+}
+
+data$G1_VS_G2 <- NA
+for (i in 1:length(data$treatment)){
+  if (data$G1_dummy[i] == data$G2_dummy[i]){
+    data$G1_VS_G2[i] <- 1
+  }
+}
+
+# Abadon treatment group obs that have move > 0.
+data$G2_liar <- 1
+for (i in 1:length(data$treatment)){
+  if (data$treatment[i] == 1 & data$move[i] > 0){
+    data$G2_liar[i] <- NA
+  }
+}
+
+data <- na.omit(data)
+# write.csv(data, "Ke_ckeck180918.csv")
+
 
 ##unmatched model
 lm.model0.1 <- lm(responding ~ treatment + RACE + pincome2 + nkids + peduc + SEX + poverty + live + as.factor(neighbor) + move, data = data)
